@@ -1,25 +1,12 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { database } from '@/lib/db'
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const classId = searchParams.get('classId')
 
-    const topics = await prisma.topic.findMany({
-      where: classId ? { classId } : undefined,
-      include: {
-        class: true,
-        _count: {
-          select: {
-            flashcards: true,
-            notes: true,
-          },
-        },
-      },
-      orderBy: [{ classId: 'asc' }, { order: 'asc' }],
-    })
-
+    const topics = await database.getTopicsWithCounts(classId || undefined)
     return NextResponse.json(topics)
   } catch (error) {
     console.error('Error fetching topics:', error)
@@ -39,20 +26,10 @@ export async function POST(request: Request) {
       )
     }
 
-    // Get the highest order number for this class
-    const maxOrder = await prisma.topic.findFirst({
-      where: { classId },
-      orderBy: { order: 'desc' },
-      select: { order: true },
-    })
-
-    const newTopic = await prisma.topic.create({
-      data: {
-        name,
-        description: description || null,
-        classId,
-        order: (maxOrder?.order ?? -1) + 1,
-      },
+    const newTopic = await database.createTopic({
+      name,
+      description: description || undefined,
+      classId,
     })
 
     return NextResponse.json(newTopic, { status: 201 })

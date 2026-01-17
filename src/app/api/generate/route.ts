@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { database } from '@/lib/db'
 import { generateFlashcards, generateQuizQuestions } from '@/lib/ai'
 
 export async function POST(request: Request) {
@@ -16,9 +16,7 @@ export async function POST(request: Request) {
 
     if (noteId) {
       // Generate from a specific note
-      const note = await prisma.note.findUnique({
-        where: { id: noteId },
-      })
+      const note = await database.getNote(noteId)
 
       if (!note) {
         return NextResponse.json({ error: 'Note not found' }, { status: 404 })
@@ -27,9 +25,7 @@ export async function POST(request: Request) {
       content = note.extractedText || note.content || ''
     } else {
       // Generate from all notes in the topic
-      const notes = await prisma.note.findMany({
-        where: { topicId },
-      })
+      const notes = await database.getNotes(topicId)
 
       content = notes
         .map(n => n.extractedText || n.content || '')
@@ -55,15 +51,13 @@ export async function POST(request: Request) {
     // Save flashcards to database
     const savedCards = await Promise.all(
       generatedCards.map(card =>
-        prisma.flashcard.create({
-          data: {
-            question: card.question,
-            answer: card.answer,
-            hint: card.hint,
-            difficulty: card.difficulty,
-            topicId,
-            noteId: noteId || null,
-          },
+        database.createFlashcard({
+          question: card.question,
+          answer: card.answer,
+          hint: card.hint,
+          difficulty: card.difficulty,
+          topicId,
+          noteId: noteId || undefined,
         })
       )
     )

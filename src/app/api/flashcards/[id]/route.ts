@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { database } from '@/lib/db'
 
 export async function PATCH(
   request: Request,
@@ -9,18 +9,19 @@ export async function PATCH(
     const body = await request.json()
     const { question, answer, hint, difficulty, timesStudied, timesCorrect, lastStudied } = body
 
-    const updatedFlashcard = await prisma.flashcard.update({
-      where: { id: params.id },
-      data: {
-        ...(question && { question }),
-        ...(answer && { answer }),
-        ...(hint !== undefined && { hint }),
-        ...(difficulty !== undefined && { difficulty }),
-        ...(timesStudied !== undefined && { timesStudied }),
-        ...(timesCorrect !== undefined && { timesCorrect }),
-        ...(lastStudied !== undefined && { lastStudied: new Date(lastStudied) }),
-      },
+    const updatedFlashcard = await database.updateFlashcard(params.id, {
+      ...(question && { question }),
+      ...(answer && { answer }),
+      ...(hint !== undefined && { hint }),
+      ...(difficulty !== undefined && { difficulty }),
+      ...(timesStudied !== undefined && { timesStudied }),
+      ...(timesCorrect !== undefined && { timesCorrect }),
+      ...(lastStudied !== undefined && { lastStudied }),
     })
+
+    if (!updatedFlashcard) {
+      return NextResponse.json({ error: 'Flashcard not found' }, { status: 404 })
+    }
 
     return NextResponse.json(updatedFlashcard)
   } catch (error) {
@@ -34,10 +35,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await prisma.flashcard.delete({
-      where: { id: params.id },
-    })
-
+    await database.deleteFlashcard(params.id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting flashcard:', error)

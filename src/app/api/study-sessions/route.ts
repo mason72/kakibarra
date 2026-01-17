@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { database } from '@/lib/db'
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '10')
 
-    const sessions = await prisma.studySession.findMany({
-      orderBy: { completedAt: 'desc' },
-      take: limit,
-    })
+    const sessions = await database.getStudySessions(limit)
 
     // Parse topicIds back to arrays
     const sessionsWithParsedTopics = sessions.map(session => ({
@@ -36,13 +33,11 @@ export async function POST(request: Request) {
       )
     }
 
-    const session = await prisma.studySession.create({
-      data: {
-        topicIds: JSON.stringify(topicIds),
-        totalCards: totalCards || 0,
-        correctAnswers: correctAnswers || 0,
-        duration: duration || 0,
-      },
+    const session = await database.createStudySession({
+      topicIds,
+      totalCards: totalCards || 0,
+      correctAnswers: correctAnswers || 0,
+      duration: duration || 0,
     })
 
     return NextResponse.json(session, { status: 201 })

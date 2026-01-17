@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { database } from '@/lib/db'
 
 export async function GET(request: Request) {
   try {
@@ -7,25 +7,14 @@ export async function GET(request: Request) {
     const topicId = searchParams.get('topicId')
     const topicIds = searchParams.get('topicIds') // Comma-separated for multi-topic study
 
-    let whereClause = {}
-
+    let flashcards
     if (topicIds) {
-      whereClause = { topicId: { in: topicIds.split(',') } }
+      flashcards = await database.getFlashcardsWithTopics(undefined, topicIds.split(','))
     } else if (topicId) {
-      whereClause = { topicId }
+      flashcards = await database.getFlashcardsWithTopics(topicId)
+    } else {
+      flashcards = await database.getFlashcardsWithTopics()
     }
-
-    const flashcards = await prisma.flashcard.findMany({
-      where: whereClause,
-      include: {
-        topic: {
-          include: {
-            class: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
 
     return NextResponse.json(flashcards)
   } catch (error) {
@@ -46,15 +35,13 @@ export async function POST(request: Request) {
       )
     }
 
-    const flashcard = await prisma.flashcard.create({
-      data: {
-        question,
-        answer,
-        hint: hint || null,
-        difficulty: difficulty || 1,
-        topicId,
-        noteId: noteId || null,
-      },
+    const flashcard = await database.createFlashcard({
+      question,
+      answer,
+      hint: hint || undefined,
+      difficulty: difficulty || undefined,
+      topicId,
+      noteId: noteId || undefined,
     })
 
     return NextResponse.json(flashcard, { status: 201 })

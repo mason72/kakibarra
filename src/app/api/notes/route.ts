@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { database } from '@/lib/db'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
@@ -9,18 +9,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const topicId = searchParams.get('topicId')
 
-    const notes = await prisma.note.findMany({
-      where: topicId ? { topicId } : undefined,
-      include: {
-        topic: {
-          include: {
-            class: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
-
+    const notes = await database.getNotes(topicId || undefined)
     return NextResponse.json(notes)
   } catch (error) {
     console.error('Error fetching notes:', error)
@@ -44,8 +33,8 @@ export async function POST(request: Request) {
       )
     }
 
-    let filePath: string | null = null
-    let extractedText: string | null = content
+    let filePath: string | undefined
+    let extractedText: string | undefined = content || undefined
 
     if (file) {
       // Save uploaded file
@@ -66,15 +55,13 @@ export async function POST(request: Request) {
       }
     }
 
-    const note = await prisma.note.create({
-      data: {
-        name,
-        type,
-        content: type === 'youtube' ? content : null,
-        filePath,
-        extractedText,
-        topicId,
-      },
+    const note = await database.createNote({
+      name,
+      type,
+      content: type === 'youtube' ? (content || undefined) : undefined,
+      filePath,
+      extractedText,
+      topicId,
     })
 
     return NextResponse.json(note, { status: 201 })

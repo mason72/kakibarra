@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { database } from '@/lib/db'
 import { unlink } from 'fs/promises'
 import path from 'path'
 
@@ -8,17 +8,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const note = await prisma.note.findUnique({
-      where: { id: params.id },
-      include: {
-        topic: {
-          include: {
-            class: true,
-          },
-        },
-        flashcards: true,
-      },
-    })
+    const note = await database.getNote(params.id)
 
     if (!note) {
       return NextResponse.json({ error: 'Note not found' }, { status: 404 })
@@ -39,13 +29,14 @@ export async function PATCH(
     const body = await request.json()
     const { name, extractedText } = body
 
-    const updatedNote = await prisma.note.update({
-      where: { id: params.id },
-      data: {
-        ...(name && { name }),
-        ...(extractedText !== undefined && { extractedText }),
-      },
+    const updatedNote = await database.updateNote(params.id, {
+      ...(name && { name }),
+      ...(extractedText !== undefined && { extractedText }),
     })
+
+    if (!updatedNote) {
+      return NextResponse.json({ error: 'Note not found' }, { status: 404 })
+    }
 
     return NextResponse.json(updatedNote)
   } catch (error) {
@@ -59,9 +50,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const note = await prisma.note.findUnique({
-      where: { id: params.id },
-    })
+    const note = await database.getNote(params.id)
 
     if (note?.filePath) {
       // Try to delete the file
@@ -73,10 +62,7 @@ export async function DELETE(
       }
     }
 
-    await prisma.note.delete({
-      where: { id: params.id },
-    })
-
+    await database.deleteNote(params.id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting note:', error)

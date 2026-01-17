@@ -1,29 +1,12 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { database } from '@/lib/db'
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const classData = await prisma.class.findUnique({
-      where: { id: params.id },
-      include: {
-        topics: {
-          include: {
-            notes: true,
-            flashcards: true,
-            _count: {
-              select: {
-                flashcards: true,
-                notes: true,
-              },
-            },
-          },
-          orderBy: { order: 'asc' },
-        },
-      },
-    })
+    const classData = await database.getClassWithTopics(params.id)
 
     if (!classData) {
       return NextResponse.json({ error: 'Class not found' }, { status: 404 })
@@ -44,15 +27,16 @@ export async function PATCH(
     const body = await request.json()
     const { name, description, color, emoji } = body
 
-    const updatedClass = await prisma.class.update({
-      where: { id: params.id },
-      data: {
-        ...(name && { name }),
-        ...(description !== undefined && { description }),
-        ...(color && { color }),
-        ...(emoji && { emoji }),
-      },
+    const updatedClass = await database.updateClass(params.id, {
+      ...(name && { name }),
+      ...(description !== undefined && { description }),
+      ...(color && { color }),
+      ...(emoji && { emoji }),
     })
+
+    if (!updatedClass) {
+      return NextResponse.json({ error: 'Class not found' }, { status: 404 })
+    }
 
     return NextResponse.json(updatedClass)
   } catch (error) {
@@ -66,10 +50,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await prisma.class.delete({
-      where: { id: params.id },
-    })
-
+    await database.deleteClass(params.id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting class:', error)
