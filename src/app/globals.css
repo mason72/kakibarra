@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 55, 30, 15;
+  --background-start-rgb: 253, 248, 243;
+  --background-end-rgb: 249, 237, 224;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      rgb(var(--background-start-rgb)),
+      rgb(var(--background-end-rgb))
+    );
+  min-height: 100vh;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f2d9bc;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4873f;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c66f33;
+}
+
+/* Lagoon water effect for progress bar */
+.lagoon-water {
+  background: linear-gradient(
+    90deg,
+    #38967d 0%,
+    #58b199 25%,
+    #8acdb9 50%,
+    #58b199 75%,
+    #38967d 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Water ripple effect */
+.water-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.water-ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    45deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 60%
+  );
+  background-size: 200% 200%;
+  animation: water-shine 3s ease-in-out infinite;
+}
+
+@keyframes water-shine {
+  0% {
+    background-position: 200% 200%;
+  }
+  100% {
+    background-position: -200% -200%;
+  }
+}
+
+/* Lily pad float animation */
+.lily-float {
+  animation: lily-float 6s ease-in-out infinite;
+}
+
+@keyframes lily-float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-3px) rotate(1deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-2px) rotate(-1deg);
+  }
+}
+
+/* Card flip animation */
+.flip-card {
+  perspective: 1000px;
+}
+
+.flip-card-inner {
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.flip-card.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  backface-visibility: hidden;
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+
+/* Confetti effect */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100%) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.confetti {
+  animation: confetti-fall 3s ease-out forwards;
+}
+
+/* Button press effect */
+.btn-press {
+  transition: transform 0.1s ease-out;
+}
+
+.btn-press:active {
+  transform: scale(0.95);
+}
+
+/* Smooth page transitions */
+.page-transition {
+  animation: fade-in 0.3s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

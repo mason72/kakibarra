@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// A class/subject (e.g., "AP Biology", "US History")
+model Class {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  color       String   @default("#d4873f")
+  emoji       String   @default("📚")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  topics      Topic[]
+}
+
+// A topic within a class (e.g., "Cell Biology", "Chapter 5")
+model Topic {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  classId     String
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  notes       Note[]
+  flashcards  Flashcard[]
+}
+
+// Uploaded notes (PDF, image, PowerPoint, YouTube link, etc.)
+model Note {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   // "pdf", "image", "pptx", "youtube", "text"
+  content     String?  // For text content or YouTube URL
+  filePath    String?  // For uploaded files
+  extractedText String? // Text extracted from files for AI processing
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  flashcards  Flashcard[]
+}
+
+// Generated flashcards
+model Flashcard {
+  id          String   @id @default(uuid())
+  question    String
+  answer      String
+  hint        String?
+  difficulty  Int      @default(1) // 1-5 scale
+  timesStudied Int     @default(0)
+  timesCorrect Int     @default(0)
+  lastStudied DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  noteId      String?
+  note        Note?    @relation(fields: [noteId], references: [id], onDelete: SetNull)
+}
+
+// Study sessions for progress tracking
+model StudySession {
+  id              String   @id @default(uuid())
+  topicIds        String   // JSON array of topic IDs studied
+  totalCards      Int
+  correctAnswers  Int
+  duration        Int      // in seconds
+  completedAt     DateTime @default(now())
+}
